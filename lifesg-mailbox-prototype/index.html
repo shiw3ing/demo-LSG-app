@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LifeSG – Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Design tokens (flagshipDS / LifeSG app variant) ── */
+  :root {
+    --text-n1: #282828;
+    --text-n2: #393939;
+    --text-n3: #686868;
+    --text-n4: #8e8e8e;
+    --border-n5: #dde1e2;
+    --border-n4: #afafb0;
+    --bg-n7: #f9f9f9;
+    --bg-n8: #ffffff;
+    --bg-inverse-n2: #4e4e4e;
+    --bg-error-strong: #cb2213;
+    --text-inverse: #ffffff;
+    --primary: #1768be;
+    --primary-dark: #004d9f;
+    --primary-strongest: #002752;
+    --shadow-subtle: 0 2px 8px rgba(104, 104, 104, 0.24);
+    --shadow-xs: 0 0 4px rgba(104, 104, 104, 0.12);
+
+    --font-heading: 'Open Sans', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  a { text-decoration: none; color: inherit; }
+
+  body {
+    font-family: var(--font-body);
+    background: #e8e8e8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+
+  /* ── Mobile frame ── */
+  .frame {
+    width: 375px;
+    min-height: 812px;
+    background:
+      linear-gradient(160.99deg, rgba(230, 242, 255, 0.8) 0%, rgba(253, 238, 233, 0.8) 34.232%),
+      linear-gradient(90deg, #fff 0%, #fff 100%);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+
+  /* ── iOS status bar ── */
+  .status-bar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+  .status-bar .time {
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.64px;
+    color: var(--text-n1);
+  }
+  .status-bar .status-icons { display: flex; align-items: center; gap: 4px; }
+  .sim-bars { display: flex; align-items: flex-end; gap: 1.5px; width: 17px; height: 12px; }
+  .sim-bars span { display: block; width: 3px; background: var(--text-n1); border-radius: 1px; }
+  .sim-bars span:nth-child(1) { height: 40%; }
+  .sim-bars span:nth-child(2) { height: 60%; }
+  .sim-bars span:nth-child(3) { height: 80%; }
+  .sim-bars span:nth-child(4) { height: 100%; }
+  .status-icons img { display: block; height: 12px; }
+  .status-icons img.battery { height: 12px; width: 24px; }
+
+  /* ── Header ── */
+  .header { padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; }
+  .header-row { display: flex; align-items: flex-end; gap: 8px; }
+  .username { flex: 1; min-width: 0; }
+  .username .welcome { font-size: 14px; line-height: 20px; color: var(--text-n1); }
+  .username .name { font-weight: 700; font-size: 20px; line-height: 28px; color: var(--text-n1); }
+  .header-icons { display: flex; align-items: center; gap: 24px; }
+  .header-icons img { width: 24px; height: 24px; display: block; }
+  .icon-btn { border: none; background: none; padding: 0; cursor: pointer; line-height: 0; }
+
+  /* Mail icon + unread badge */
+  .icon-mail { position: relative; width: 24px; height: 24px; }
+  .icon-mail .badge-count {
+    position: absolute; top: -6px; left: 14px; min-width: 16px; height: 16px;
+    padding: 2px 4px; box-sizing: border-box;
+    background: var(--bg-error-strong); border: 1px solid #fff; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 11px; line-height: 1;
+  }
+  .icon-mail .badge-count:empty { display: none; }
+
+  /* ── Content ── */
+  .content { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 8px 24px 0; margin-top: 24px; margin-bottom: 24px; }
+
+  /* ── Section ── */
+  .section { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+  .section-header { display: flex; align-items: center; gap: 4px; width: 100%; }
+  .section-header h2 { flex: 1; font-weight: 600; font-size: 16px; line-height: 22px; color: var(--text-n2); }
+  .section-header .view-all { font-size: 12px; line-height: 18px; color: var(--primary); text-decoration: none; white-space: nowrap; }
+
+  /* Recents empty state */
+  .empty-card {
+    width: 100%;
+    border: 1px dashed var(--border-n4);
+    border-radius: 8px;
+    box-shadow: var(--shadow-xs);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .empty-card p { font-size: 12px; line-height: 18px; letter-spacing: 0.1px; color: var(--text-n2); text-align: center; }
+  .empty-card .explore-link { font-weight: 600; font-size: 12px; line-height: 18px; letter-spacing: 0.1px; color: var(--primary); }
+
+  /* Cards */
+  .card {
+    width: 100%;
+    background: var(--bg-n8);
+    border: 1px solid var(--border-n5);
+    border-radius: 8px;
+  }
+
+  /* Horizontal scroll rows */
+  .hscroll {
+    display: flex; gap: 8px; width: 100%;
+    overflow-x: auto; scroll-snap-type: x proximity;
+    -ms-overflow-style: none; scrollbar-width: none;
+  }
+  .hscroll::-webkit-scrollbar { display: none; }
+  .hscroll > * { scroll-snap-align: start; flex-shrink: 0; }
+
+  /* Quicklink buttons */
+  .quicklinks { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .quicklink {
+    display: flex; align-items: center; gap: 16px; padding: 16px;
+    text-decoration: none; cursor: pointer;
+  }
+  .quicklink img.icon { width: 24px; height: 24px; flex-shrink: 0; }
+  .quicklink span { flex: 1; font-weight: 600; font-size: 14px; line-height: 20px; color: var(--text-n1); }
+  .quicklink .chevron { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* Bottom sheet */
+  .sheet {
+    width: 100%;
+    background: var(--bg-n8);
+    border-radius: 24px 24px 0 0;
+    box-shadow: var(--shadow-subtle);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* Credit cards */
+  .credit-card {
+    width: 160px; background: var(--bg-n7); border: 1px solid var(--border-n5);
+    border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 0;
+  }
+  .credit-card .credit-title {
+    padding: 8px; text-align: center; font-weight: 600; font-size: 14px; line-height: 20px; color: var(--text-n1);
+    min-height: 56px; display: flex; align-items: center; justify-content: center;
+  }
+  .credit-card .credit-body {
+    background: var(--bg-n8); border-radius: 4px; padding: 8px;
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .credit-card .label { font-size: 12px; line-height: 18px; color: var(--text-n3); }
+  .credit-card .amount { font-weight: 600; font-size: 24px; line-height: 30px; letter-spacing: -0.24px; color: var(--primary-dark); text-align: right; }
+  .credit-card .expiry { font-size: 12px; line-height: 18px; color: var(--text-n3); }
+
+  /* Benefits card */
+  .benefits-card {
+    width: 100%; border: 1px solid var(--border-n5); border-radius: 8px; padding: 16px;
+    display: flex; flex-direction: column; gap: 16px;
+    background:
+      linear-gradient(185.46deg, rgba(229, 246, 255, 0) 19.874%, rgb(229, 246, 255) 80.126%),
+      linear-gradient(90deg, #fff 0%, #fff 100%);
+  }
+  .benefits-card .benefits-label { font-size: 14px; line-height: 20px; color: var(--text-n3); }
+  .benefits-card .benefits-amount { font-weight: 600; font-size: 24px; line-height: 30px; letter-spacing: -0.24px; color: var(--primary-strongest); }
+  .benefits-card .view-breakdown { font-weight: 600; font-size: 14px; line-height: 20px; color: var(--primary-dark); text-decoration: none; }
+
+  /* ── Bottom nav ── */
+  .bottom-nav { display: flex; width: 100%; background: #fff; }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px; border-top: 1px solid var(--border-n5); text-decoration: none;
+  }
+  .nav-item img { width: 24px; height: 24px; display: block; }
+  .nav-item span { font-size: 12px; line-height: 18px; letter-spacing: 0.1px; color: var(--text-n3); }
+  .nav-item.active span { font-weight: 600; color: var(--text-n1); }
+  .nav-explore-icon { position: relative; width: 24px; height: 24px; }
+  .nav-explore-icon img.base { position: absolute; inset: 3px 3px 5px 3px; width: 18px; height: 16px; }
+  .nav-explore-icon .badge-check {
+    position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px;
+    background: #fff; border: 2px solid #fff; border-radius: 5px 2px 5px 2px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-explore-icon .badge-check img { position: static; width: 8px; height: 8px; }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="status-icons">
+      <div class="sim-bars"><span></span><span></span><span></span><span></span></div>
+      <img src="assets/wifi.svg" alt="" />
+      <img class="battery" src="assets/battery.svg" alt="" />
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <div class="username">
+        <div class="welcome">Welcome</div>
+        <div class="name">JOHN KANG</div>
+      </div>
+      <div class="header-icons">
+        <a class="icon-btn" href="mailbox.html" id="mailIconBtn" aria-label="Mail">
+          <div class="icon-mail">
+            <img src="assets/envelope.svg" alt="" />
+            <span class="badge-count" id="mailBadgeCount"></span>
+          </div>
+        </a>
+        <button class="icon-btn" aria-label="Calendar"><img src="assets/calendar.svg" alt="" /></button>
+        <button class="icon-btn" aria-label="Notifications"><img src="assets/bell.svg" alt="" /></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Recents (empty state) -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Recents</h2>
+      </div>
+      <div class="empty-card">
+        <p>Services you&rsquo;ve recently used will show up here.</p>
+        <a class="explore-link" href="index.html" id="refreshPrototypeLink">Refresh prototype</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom rounded sheet -->
+  <div class="sheet">
+
+    <!-- Your credits -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Your credits</h2>
+        <a class="view-all" href="#">View all</a>
+      </div>
+      <div class="hscroll">
+        <div class="credit-card">
+          <div class="credit-title">SkillsFuture Credit (Mid-Career)</div>
+          <div class="credit-body">
+            <span class="label">Available balance</span>
+            <span class="amount">$ 500</span>
+            <span class="expiry">No expiry date</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Your benefits -->
+    <div class="section">
+      <div class="section-header"><h2>Your benefits</h2></div>
+      <div class="benefits-card">
+        <div>
+          <div class="benefits-label">Estimated benefits for 2025</div>
+          <div class="benefits-amount">$6,818</div>
+        </div>
+        <a class="view-breakdown" href="#">View breakdown</a>
+      </div>
+    </div>
+
+    <!-- OneService -->
+    <div class="section">
+      <div class="section-header"><h2>OneService</h2></div>
+      <div class="quicklinks">
+        <a class="card quicklink" href="#">
+          <img class="icon" src="assets/send-mail.svg" alt="" />
+          <span>Submit case</span>
+          <img class="chevron" src="assets/chevron.svg" alt="" />
+        </a>
+        <a class="card quicklink" href="#">
+          <img class="icon" src="assets/town.svg" alt="" />
+          <span>Book facilities</span>
+          <img class="chevron" src="assets/chevron.svg" alt="" />
+        </a>
+        <a class="card quicklink" href="#">
+          <img class="icon" src="assets/help-neighbour.svg" alt="" />
+          <span>Help neighbour</span>
+          <img class="chevron" src="assets/chevron.svg" alt="" />
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <a class="nav-item active" href="#">
+      <img src="assets/nav-home.svg" alt="" />
+      <span>Home</span>
+    </a>
+    <a class="nav-item" href="#">
+      <img src="assets/nav-services.svg" alt="" />
+      <span>Services</span>
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-explore-icon">
+        <img class="base" src="assets/nav-explore.svg" alt="" />
+        <span class="badge-check"><img src="assets/nav-explore-check.svg" alt="" /></span>
+      </div>
+      <span>Explore</span>
+    </a>
+    <a class="nav-item" href="#">
+      <img src="assets/nav-account.svg" alt="" />
+      <span>Account</span>
+    </a>
+  </div>
+
+</div>
+
+<script src="mail-data.js?v=18"></script>
+<script>
+(function () {
+  var readIds = mailGetReadIds();
+  var unreadCount = 0;
+  for (var i = 0; i < MAIL_DATA.length; i++) {
+    if (!mailIsRead(MAIL_DATA[i], readIds)) unreadCount++;
+  }
+  var badge = document.getElementById('mailBadgeCount');
+  var iconBtn = document.getElementById('mailIconBtn');
+  if (unreadCount > 0) {
+    badge.textContent = String(unreadCount);
+    iconBtn.setAttribute('aria-label', 'Mail, ' + unreadCount + ' unread');
+  } else {
+    badge.textContent = '';
+    iconBtn.setAttribute('aria-label', 'Mail');
+  }
+
+  /* Resets all prototype state (read/unread mail, remembered scroll positions) back to
+     first-run, since clicking through the prototype otherwise has no way to start over. */
+  document.getElementById('refreshPrototypeLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    try { localStorage.clear(); } catch (err) {}
+    try { sessionStorage.clear(); } catch (err) {}
+    window.location.href = 'index.html';
+  });
+})();
+</script>
+
+</body>
+</html>
