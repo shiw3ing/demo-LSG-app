@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LifeSG – Mail</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --text-n1: #282828;
+    --text-n2: #393939;
+    --text-n3: #686868;
+    --border-n5: #dde1e2;
+    --bg-n8: #ffffff;
+    --primary: #1768be;
+    --link: #096ea1;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  a { text-decoration: none; color: inherit; }
+  button, input { font: inherit; }
+
+  body {
+    font-family: 'Open Sans', sans-serif;
+    background: #e8e8e8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+
+  .frame {
+    width: 375px;
+    min-height: 812px;
+    background: var(--bg-n8);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  /* ── iOS status bar ── */
+  .status-bar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+  .status-bar .time { font-weight: 600; font-size: 16px; letter-spacing: -0.64px; color: var(--text-n1); }
+  .status-bar .status-icons { display: flex; align-items: center; gap: 4px; }
+  .sim-bars { display: flex; align-items: flex-end; gap: 1.5px; width: 17px; height: 12px; }
+  .sim-bars span { display: block; width: 3px; background: var(--text-n1); border-radius: 1px; }
+  .sim-bars span:nth-child(1) { height: 40%; }
+  .sim-bars span:nth-child(2) { height: 60%; }
+  .sim-bars span:nth-child(3) { height: 80%; }
+  .sim-bars span:nth-child(4) { height: 100%; }
+  .status-icons img { display: block; height: 12px; }
+  .status-icons img.battery { height: 12px; width: 24px; }
+
+  /* ── Masthead ── */
+  .masthead {
+    position: sticky; top: 0; z-index: 1; background: var(--bg-n8); flex-shrink: 0;
+    border-bottom: 1px solid var(--border-n5);
+  }
+  .mail-header-bar { display: flex; align-items: flex-end; padding: 8px 24px 16px; }
+  .back-btn { width: 24px; height: 24px; border: none; background: none; padding: 0; cursor: pointer; line-height: 0; }
+  .back-btn img { width: 24px; height: 24px; display: block; }
+
+  /* ── Mail header (date + subject) ── */
+  .mail-meta { display: flex; flex-direction: column; gap: 16px; padding: 16px 20px; }
+  .mail-meta .date { font-size: 14px; line-height: 20px; letter-spacing: 0.12px; color: var(--text-n3); }
+  .mail-meta .subject { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--text-n1); }
+  .mail-meta .agency { font-size: 14px; line-height: 20px; letter-spacing: 0.12px; color: var(--text-n3); }
+  .mail-meta .agency:empty { display: none; }
+
+  .divider { height: 1px; background: var(--border-n5); width: 100%; flex-shrink: 0; }
+
+  /* ── Content ── */
+  .content { display: flex; flex-direction: column; gap: 32px; padding: 32px 24px; }
+  .content p { font-size: 18px; line-height: 26px; color: var(--text-n1); }
+  .content .contact a { color: var(--primary); font-weight: 600; }
+  .content-heading { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--text-n1); }
+  .content-heading-lg { font-weight: 600; font-size: 22px; line-height: 28px; color: var(--text-n1); }
+
+  .qa-list { display: flex; flex-direction: column; gap: 24px; }
+  .qa-item { display: flex; flex-direction: column; gap: 4px; }
+  .qa-item .question { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--text-n1); }
+  .qa-item .answer { font-size: 18px; line-height: 26px; color: var(--text-n1); }
+
+  .text-list { display: flex; flex-direction: column; gap: 8px; }
+  .text-list .list-heading { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--text-n1); }
+  .list-item { display: flex; align-items: flex-start; }
+  .list-item.nested { padding-left: 45px; }
+  .list-item .bullet-col { width: 45px; height: 26px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0 10px; }
+  .list-item .bullet-col img { width: 8px; height: 8px; display: block; }
+  .list-item .list-text { flex: 1; min-width: 0; font-size: 18px; line-height: 26px; color: var(--text-n1); }
+  .list-item .list-text strong { font-weight: 600; }
+
+  .primary-btn {
+    width: 100%; height: 48px; display: flex; align-items: center; justify-content: center;
+    background: var(--primary); color: #fff; border: none; border-radius: 4px;
+    font-family: inherit; font-weight: 600; font-size: 18px; line-height: 26px; cursor: pointer;
+  }
+  .secondary-btn {
+    width: 100%; height: 48px; display: flex; align-items: center; justify-content: center;
+    background: none; color: var(--primary); border: none; border-radius: 4px;
+    font-family: inherit; font-weight: 600; font-size: 18px; line-height: 26px; cursor: pointer;
+  }
+
+  .link-text { color: var(--link); font-weight: 600; }
+  .external-icon-inline { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-left: 2px; }
+
+  .item-title { font-weight: 600; }
+
+  .fields-list { display: flex; flex-direction: column; gap: 32px; width: 100%; }
+  .field-item { display: flex; flex-direction: column; gap: 8px; }
+  .field-item .field-label { font-weight: 600; font-size: 16px; line-height: 24px; letter-spacing: 0.14px; color: var(--text-n2); }
+  .field-item .field-value { font-size: 18px; line-height: 26px; color: var(--text-n1); }
+
+  .file-item {
+    display: flex; align-items: center; gap: 16px; padding: 16px; width: 100%;
+    background: #f7f9ff; border: 1px solid var(--border-n5); border-radius: 4px;
+  }
+  .file-item .file-thumb { width: 50px; height: 57px; flex-shrink: 0; }
+  .file-item .file-thumb img { width: 100%; height: 100%; display: block; }
+  .file-item .file-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .file-item .file-name { font-size: 16px; line-height: 24px; letter-spacing: 0.14px; color: var(--text-n1); overflow-wrap: break-word; }
+  .file-item .file-size { font-size: 16px; line-height: 24px; letter-spacing: 0.14px; color: var(--text-n3); }
+  .file-item .file-download-btn {
+    width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-n8); border: 1px solid var(--border-n5); border-radius: 4px; cursor: pointer;
+  }
+  .file-item .file-download-btn img { width: 16px; height: 16px; display: block; }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <div class="masthead">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <div class="sim-bars"><span></span><span></span><span></span><span></span></div>
+        <img src="assets/wifi.svg" alt="" />
+        <img class="battery" src="assets/battery.svg" alt="" />
+      </div>
+    </div>
+    <div class="mail-header-bar">
+      <a class="back-btn" id="backBtn" href="mailbox.html" aria-label="Back">
+        <img src="assets/mailbox-back-chevron.svg" alt="" />
+      </a>
+    </div>
+  </div>
+
+  <div class="mail-meta">
+    <div class="date" id="mailDate"></div>
+    <div class="subject" id="mailSubject"></div>
+    <div class="agency" id="mailAgency"></div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="content" id="content"></div>
+
+</div>
+
+<script src="mail-data.js?v=18"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var id = parseInt(params.get('id'), 10);
+  var tab = params.get('tab') === 'unread' ? 'unread' : 'all';
+  var page = parseInt(params.get('page'), 10);
+  if (!page || page < 1) page = 1;
+
+  document.getElementById('backBtn').setAttribute('href', 'mailbox.html?tab=' + tab + '&page=' + page);
+
+  var mail = mailGetById(id);
+  if (!mail) {
+    window.location.replace('mailbox.html?tab=' + tab + '&page=' + page);
+    return;
+  }
+
+  mailMarkRead(mail.id);
+  document.getElementById('mailSubject').textContent = mail.title;
+  document.getElementById('mailDate').textContent = mailFormatDisplayDate(mail.date);
+  document.getElementById('mailAgency').textContent = mail.agency || '';
+  document.title = 'LifeSG – ' + mail.title;
+
+  var content = document.getElementById('content');
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  /* Appends a run of {text} | {text, bold} | {text, link, external?} segments to a parent element,
+     as plain text nodes / <strong> / <span class="link-text"> (+ external-icon) as appropriate. */
+  function appendRuns(parent, runs) {
+    runs.forEach(function (run) {
+      if (run.link) {
+        var span = run.href ? document.createElement('a') : document.createElement('span');
+        span.className = 'link-text';
+        if (run.href) {
+          span.href = run.href;
+          span.target = '_blank';
+          span.rel = 'noopener';
+        }
+        span.textContent = run.text;
+        parent.appendChild(span);
+        if (run.external) {
+          var extImg = document.createElement('img');
+          extImg.src = 'assets/mail-detail-external-icon.svg';
+          extImg.alt = '';
+          extImg.className = 'external-icon-inline';
+          parent.appendChild(extImg);
+        }
+      } else if (run.bold) {
+        var strong = document.createElement('strong');
+        strong.textContent = run.text;
+        parent.appendChild(strong);
+      } else {
+        parent.appendChild(document.createTextNode(run.text));
+      }
+    });
+  }
+
+  /* A list item is either: a plain string; { runs, children? } for a bold lead-in phrase followed
+     by regular text with optional indented sub-bullets; or { title, runs? } for a bold title line
+     with an optional second line of mixed text/links below it. */
+  function renderListItem(item, nested) {
+    var frag = document.createDocumentFragment();
+
+    var row = el('div', 'list-item' + (nested ? ' nested' : ''));
+    var bulletCol = el('div', 'bullet-col');
+    var bullet = document.createElement('img');
+    bullet.src = 'assets/mail-detail-bullet.svg';
+    bullet.alt = '';
+    bulletCol.appendChild(bullet);
+    row.appendChild(bulletCol);
+
+    var textEl = el('div', 'list-text');
+    if (typeof item === 'string') {
+      textEl.textContent = item;
+    } else if (item.title !== undefined) {
+      textEl.appendChild(el('div', 'item-title', item.title));
+      if (item.runs) {
+        var bodyDiv = document.createElement('div');
+        appendRuns(bodyDiv, item.runs);
+        textEl.appendChild(bodyDiv);
+      }
+    } else {
+      appendRuns(textEl, item.runs);
+    }
+    row.appendChild(textEl);
+    frag.appendChild(row);
+
+    if (item && item.children) {
+      item.children.forEach(function (child) { frag.appendChild(renderListItem(child, true)); });
+    }
+    return frag;
+  }
+
+  function renderBlock(block) {
+    if (block.type === 'p') {
+      if (block.runs) {
+        var richP = document.createElement('p');
+        appendRuns(richP, block.runs);
+        content.appendChild(richP);
+      } else {
+        content.appendChild(el('p', null, block.text));
+      }
+    } else if (block.type === 'fields') {
+      var fieldsWrap = el('div', 'text-list');
+      if (block.heading) fieldsWrap.appendChild(el('div', 'list-heading', block.heading));
+      var fieldsList = el('div', 'fields-list');
+      block.items.forEach(function (field) {
+        var row = el('div', 'field-item');
+        row.appendChild(el('div', 'field-label', field.label));
+        row.appendChild(el('div', 'field-value', field.value));
+        fieldsList.appendChild(row);
+      });
+      fieldsWrap.appendChild(fieldsList);
+      content.appendChild(fieldsWrap);
+    } else if (block.type === 'file') {
+      var fileItem = el('div', 'file-item');
+      var thumb = el('div', 'file-thumb');
+      var thumbImg = document.createElement('img');
+      thumbImg.src = 'assets/mail-detail-pdf-thumb.svg';
+      thumbImg.alt = '';
+      thumb.appendChild(thumbImg);
+      fileItem.appendChild(thumb);
+      var info = el('div', 'file-info');
+      info.appendChild(el('div', 'file-name', block.name));
+      info.appendChild(el('div', 'file-size', block.size));
+      fileItem.appendChild(info);
+      var dlBtn = document.createElement('button');
+      dlBtn.type = 'button';
+      dlBtn.className = 'file-download-btn';
+      dlBtn.setAttribute('aria-label', 'Download ' + block.name);
+      var dlImg = document.createElement('img');
+      dlImg.src = 'assets/mail-detail-download-icon.svg';
+      dlImg.alt = '';
+      dlBtn.appendChild(dlImg);
+      fileItem.appendChild(dlBtn);
+      content.appendChild(fileItem);
+    } else if (block.type === 'heading') {
+      content.appendChild(el('div', 'content-heading', block.text));
+    } else if (block.type === 'heading-lg') {
+      content.appendChild(el('div', 'content-heading-lg', block.text));
+    } else if (block.type === 'qa') {
+      var qaWrap = el('div', 'qa-list');
+      block.items.forEach(function (qaItem) {
+        var row = el('div', 'qa-item');
+        row.appendChild(el('div', 'question', qaItem.q));
+        var answerEl = el('div', 'answer');
+        if (qaItem.aRuns) {
+          appendRuns(answerEl, qaItem.aRuns);
+        } else {
+          answerEl.textContent = qaItem.a;
+        }
+        row.appendChild(answerEl);
+        qaWrap.appendChild(row);
+      });
+      content.appendChild(qaWrap);
+    } else if (block.type === 'list') {
+      var wrap = el('div', 'text-list');
+      wrap.appendChild(el('div', 'list-heading', block.heading));
+      block.items.forEach(function (item) { wrap.appendChild(renderListItem(item)); });
+      content.appendChild(wrap);
+    } else if (block.type === 'button') {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'primary-btn';
+      btn.textContent = block.label;
+      content.appendChild(btn);
+    } else if (block.type === 'button-secondary') {
+      var secBtn = document.createElement('button');
+      secBtn.type = 'button';
+      secBtn.className = 'secondary-btn';
+      secBtn.textContent = block.label;
+      content.appendChild(secBtn);
+    } else if (block.type === 'divider') {
+      content.appendChild(el('div', 'divider'));
+    } else if (block.type === 'p-contact') {
+      var p = el('p', 'contact');
+      p.appendChild(document.createTextNode(block.before));
+      var link = document.createElement('a');
+      link.href = (block.kind === 'email' ? 'mailto:' : 'tel:') + (block.kind === 'email' ? block.bold : block.bold.replace(/\s+/g, ''));
+      link.textContent = block.bold;
+      p.appendChild(link);
+      p.appendChild(document.createTextNode(block.after));
+      content.appendChild(p);
+    }
+  }
+
+  if (mail.body && mail.body.length) {
+    mail.body.forEach(renderBlock);
+  } else {
+    content.appendChild(el('p', null, 'This is a placeholder for the full mail content. In the live app, this would show the complete notice, any attachments, and related actions.'));
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LifeSG – Mailbox</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --text-n1: #282828;
+    --text-n3: #686868;
+    --text-n3b: #8e8e8e;
+    --border-n4: #afafb0;
+    --border-n5: #dde1e2;
+    --bg-n8: #ffffff;
+    --primary: #1768be;
+    --primary-subtler: #e8f0fe;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  a { text-decoration: none; color: inherit; }
+  button, input { font: inherit; }
+
+  body {
+    font-family: 'Open Sans', sans-serif;
+    background: #e8e8e8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+
+  .frame {
+    width: 375px;
+    min-height: 812px;
+    background: var(--bg-n8);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  /* ── iOS status bar ── */
+  .status-bar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+  .status-bar .time { font-weight: 600; font-size: 16px; letter-spacing: -0.64px; color: var(--text-n1); }
+  .status-bar .status-icons { display: flex; align-items: center; gap: 4px; }
+  .sim-bars { display: flex; align-items: flex-end; gap: 1.5px; width: 17px; height: 12px; }
+  .sim-bars span { display: block; width: 3px; background: var(--text-n1); border-radius: 1px; }
+  .sim-bars span:nth-child(1) { height: 40%; }
+  .sim-bars span:nth-child(2) { height: 60%; }
+  .sim-bars span:nth-child(3) { height: 80%; }
+  .sim-bars span:nth-child(4) { height: 100%; }
+  .status-icons img { display: block; height: 12px; }
+  .status-icons img.battery { height: 12px; width: 24px; }
+
+  /* ── Masthead (fixed at the top) ── */
+  .masthead { position: sticky; top: 0; z-index: 3; background: var(--bg-n8); flex-shrink: 0; }
+  .mailbox-header { position: relative; display: flex; align-items: center; justify-content: center; padding: 8px 24px 16px; }
+  .back-btn { position: absolute; left: 24px; width: 24px; height: 24px; border: none; background: none; padding: 0; cursor: pointer; line-height: 0; }
+  .back-btn img { width: 24px; height: 24px; display: block; }
+  .mailbox-header h1 { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--primary); }
+  .divider { height: 1px; background: var(--border-n5); width: 100%; flex-shrink: 0; }
+
+  /* ── Sticky controls (search + tabs) ── */
+  .sticky-controls { position: sticky; top: var(--masthead-h, 90px); z-index: 2; background: var(--bg-n8); flex-shrink: 0; }
+
+  /* ── Search ── */
+  .search-wrap {
+    padding: 16px 20px 16px;
+    overflow: hidden;
+    max-height: 96px;
+    opacity: 1;
+    transition: max-height 220ms ease, opacity 220ms ease;
+  }
+  .search-wrap.hidden { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+  .search-input {
+    display: flex; align-items: center; gap: 16px; height: 48px;
+    padding: 11px 16px; border: 1px solid var(--border-n5); border-radius: 4px;
+  }
+  .search-input img { width: 18px; height: 18px; flex-shrink: 0; }
+  .search-input input {
+    flex: 1; min-width: 0; border: none; outline: none; background: none;
+    font-size: 18px; line-height: 26px; color: var(--text-n1);
+  }
+  .search-input input::placeholder { color: var(--text-n3); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; width: 100%; }
+  .tab {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px 16px 20px;
+    font-size: 18px; line-height: 26px; color: var(--text-n3);
+    border: none; border-bottom: 4px solid var(--border-n5); background: none; cursor: pointer;
+  }
+  .tab.active { color: var(--primary); font-weight: 600; border-bottom-color: var(--primary); }
+  .tab .count {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 7px; height: 20px; border-radius: 4px;
+    background: var(--primary-subtler); color: var(--primary);
+    font-weight: 600; font-size: 12px; line-height: 20px; letter-spacing: 0.12px;
+  }
+
+  /* ── Mail list ── */
+  .mail-item {
+    display: flex; gap: 16px; align-items: flex-start; width: 100%;
+    padding: 16px 20px; border-top: 1px solid var(--border-n4);
+    cursor: pointer;
+  }
+  .mail-item .indicator { width: 12px; flex-shrink: 0; display: flex; justify-content: center; padding-top: 6px; }
+  .mail-item .indicator img { width: 12px; height: 12px; display: block; }
+  .mail-item .mail-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .mail-item .mail-title { font-size: 16px; line-height: 24px; letter-spacing: 0.14px; color: var(--text-n1); }
+  .mail-item .mail-date { font-size: 14px; line-height: 20px; letter-spacing: 0.12px; color: var(--text-n1); }
+  .mail-item.read .mail-title,
+  .mail-item.read .mail-date { color: var(--text-n3); }
+
+  .no-results { display: none; padding: 40px 20px; text-align: center; font-size: 14px; line-height: 20px; color: var(--text-n3); }
+  .no-results.visible { display: block; }
+
+  .list-end-divider { height: 1px; background: var(--border-n4); width: 100%; }
+
+  /* ── Pagination ── */
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 0; padding: 16px 0; }
+  .pagination.hidden { display: none; }
+  .page-btn {
+    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    border: none; background: none; border-radius: 4px; cursor: pointer;
+  }
+  .page-btn img { width: 20px; height: 20px; display: block; }
+  .page-btn:disabled { cursor: default; }
+  .page-fields { display: flex; align-items: center; gap: 16px; padding: 12px; }
+  .page-input {
+    width: 56px; height: 42px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-n5); border-radius: 4px;
+    font-size: 16px; line-height: 24px; letter-spacing: 0.14px; color: var(--text-n1); text-align: center;
+  }
+  .page-fields .sep,
+  .page-fields .total { font-size: 18px; line-height: 26px; color: var(--text-n1); }
+</style>
+</head>
+<body>
+
+<div class="frame" id="frame">
+
+  <!-- Masthead: status bar + header, fixed at top -->
+  <div class="masthead" id="masthead">
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <div class="sim-bars"><span></span><span></span><span></span><span></span></div>
+        <img src="assets/wifi.svg" alt="" />
+        <img class="battery" src="assets/battery.svg" alt="" />
+      </div>
+    </div>
+    <div class="mailbox-header">
+      <a class="back-btn" href="index.html" aria-label="Back">
+        <img src="assets/mailbox-back-chevron.svg" alt="" />
+      </a>
+      <h1>Mailbox</h1>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <!-- Sticky controls: search collapses on scroll down, tabs stay pinned -->
+  <div class="sticky-controls" id="stickyControls">
+    <div class="search-wrap" id="searchWrap">
+      <div class="search-input">
+        <img src="assets/mailbox-search-icon.svg" alt="" />
+        <input type="text" id="searchInput" placeholder="Search mailbox" aria-label="Search mailbox" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabAll" type="button">All</button>
+      <button class="tab" id="tabUnread" type="button">Unread <span class="count" id="unreadCount">0</span></button>
+    </div>
+  </div>
+
+  <!-- Mail list: populated by JS from mail-data.js -->
+  <div class="mail-list" id="mailList"></div>
+  <div class="no-results" id="noResults">No mail found.</div>
+  <div class="list-end-divider" id="listEndDivider"></div>
+
+  <!-- Pagination -->
+  <div class="pagination" id="pagination">
+    <button class="page-btn" id="prevBtn"><img id="prevIcon" src="assets/mailbox-pg-chevron-prev-disabled.svg" alt="" /></button>
+    <div class="page-fields">
+      <span class="page-input" id="pageCurrent">1</span>
+      <span class="sep">/</span>
+      <span class="total" id="pageTotal">1</span>
+    </div>
+    <button class="page-btn" id="nextBtn"><img id="nextIcon" src="assets/mailbox-pg-chevron-next.svg" alt="" /></button>
+  </div>
+
+</div>
+
+<script src="mail-data.js?v=18"></script>
+<script>
+(function () {
+  var frame = document.getElementById('frame');
+  var masthead = document.getElementById('masthead');
+  var searchWrap = document.getElementById('searchWrap');
+  var searchInput = document.getElementById('searchInput');
+  var mailList = document.getElementById('mailList');
+  var noResults = document.getElementById('noResults');
+  var listEndDivider = document.getElementById('listEndDivider');
+  var tabAll = document.getElementById('tabAll');
+  var tabUnread = document.getElementById('tabUnread');
+  var unreadCountEl = document.getElementById('unreadCount');
+  var pagination = document.getElementById('pagination');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var prevIcon = document.getElementById('prevIcon');
+  var nextIcon = document.getElementById('nextIcon');
+  var pageCurrentEl = document.getElementById('pageCurrent');
+  var pageTotalEl = document.getElementById('pageTotal');
+
+  var ICONS = {
+    prevEnabled: 'assets/mailbox-pg-chevron-prev-enabled.svg',
+    prevDisabled: 'assets/mailbox-pg-chevron-prev-disabled.svg',
+    nextEnabled: 'assets/mailbox-pg-chevron-next.svg',
+    nextDisabled: 'assets/mailbox-pg-chevron-next-disabled.svg'
+  };
+
+  /* Scroll restoration is handled entirely by our own logic below (per tab/page,
+     with the shrink/empty exceptions). Disable the browser's native automatic
+     restore-on-reload/back-forward, which otherwise races our scrollTo calls and
+     can silently override them. */
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+
+  /* ── URL state: ?tab=all|unread&page=N. Params present means "returning from a
+     mail detail" — that's the only case scroll position gets restored. Absent
+     params (e.g. arriving fresh from index.html) always default to all/page 1. ── */
+  var initialParams = new URLSearchParams(window.location.search);
+  var hasRestoreContext = initialParams.has('tab') || initialParams.has('page');
+  var activeTab = initialParams.get('tab') === 'unread' ? 'unread' : 'all';
+  var currentPage = parseInt(initialParams.get('page'), 10);
+  if (!currentPage || currentPage < 1) currentPage = 1;
+  var currentQuery = '';
+
+  function sortedByDateDesc(list) {
+    return list.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+  }
+
+  function getFilteredForTab(tab, readIds) {
+    var list = MAIL_DATA.filter(function (m) { return tab === 'all' || !mailIsRead(m, readIds); });
+    return sortedByDateDesc(list);
+  }
+
+  function getUnreadCount(readIds) {
+    var n = 0;
+    for (var i = 0; i < MAIL_DATA.length; i++) if (!mailIsRead(MAIL_DATA[i], readIds)) n++;
+    return n;
+  }
+
+  function buildMailItemEl(mail, tab, page, isRead) {
+    var a = document.createElement('a');
+    a.className = 'mail-item' + (isRead ? ' read' : '');
+    a.href = 'mail-detail.html?id=' + mail.id + '&tab=' + tab + '&page=' + page;
+    a.addEventListener('click', function () {
+      try { sessionStorage.setItem('scroll_' + tab + '_' + page, String(window.scrollY)); } catch (e) {}
+    });
+
+    var indicator = document.createElement('div');
+    indicator.className = 'indicator';
+    if (!isRead) {
+      var dot = document.createElement('img');
+      dot.src = 'assets/mailbox-unread-dot.svg';
+      dot.alt = '';
+      indicator.appendChild(dot);
+    }
+    a.appendChild(indicator);
+
+    var body = document.createElement('div');
+    body.className = 'mail-body';
+    var title = document.createElement('div');
+    title.className = 'mail-title';
+    title.textContent = mail.title;
+    var date = document.createElement('div');
+    date.className = 'mail-date';
+    date.textContent = mailFormatDisplayDate(mail.date);
+    body.appendChild(title);
+    body.appendChild(date);
+    a.appendChild(body);
+
+    return a;
+  }
+
+  function renderItems(items, readIds, emptyMessage) {
+    mailList.innerHTML = '';
+    items.forEach(function (mail) {
+      mailList.appendChild(buildMailItemEl(mail, activeTab, currentPage, mailIsRead(mail, readIds)));
+    });
+    var empty = items.length === 0;
+    noResults.textContent = emptyMessage;
+    noResults.classList.toggle('visible', empty);
+    listEndDivider.style.display = empty ? 'none' : '';
+  }
+
+  function render() {
+    tabAll.classList.toggle('active', activeTab === 'all');
+    tabUnread.classList.toggle('active', activeTab === 'unread');
+
+    var readIds = mailGetReadIds();
+    unreadCountEl.textContent = String(getUnreadCount(readIds));
+    var tabItems = getFilteredForTab(activeTab, readIds);
+
+    if (currentQuery !== '') {
+      /* Search bypasses pagination entirely: show every match in the active tab. */
+      var matches = tabItems.filter(function (m) { return m.title.toLowerCase().indexOf(currentQuery) !== -1; });
+      renderItems(matches, readIds, 'No mail found.');
+      pagination.classList.add('hidden');
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    var totalPages = Math.max(1, Math.ceil(tabItems.length / MAIL_PAGE_SIZE));
+    var pageStart = (currentPage - 1) * MAIL_PAGE_SIZE;
+    var pageItems = tabItems.slice(pageStart, pageStart + MAIL_PAGE_SIZE);
+
+    /* Shrink/bounds check — e.g. reading the last unread mail on a page empties it:
+       fall back one page, or to the empty state if there's nowhere left to fall to. */
+    var shifted = false;
+    if (tabItems.length === 0) {
+      currentPage = 1;
+    } else if (pageItems.length === 0) {
+      shifted = true;
+      currentPage = Math.max(1, Math.min(currentPage - 1, totalPages));
+      pageStart = (currentPage - 1) * MAIL_PAGE_SIZE;
+      pageItems = tabItems.slice(pageStart, pageStart + MAIL_PAGE_SIZE);
+    }
+
+    renderItems(pageItems, readIds, activeTab === 'unread' ? 'You’re all caught up.' : 'No mail found.');
+
+    pagination.classList.remove('hidden');
+    pageCurrentEl.textContent = String(currentPage);
+    pageTotalEl.textContent = String(totalPages);
+    var atFirst = currentPage <= 1;
+    var atLast = currentPage >= totalPages || tabItems.length === 0;
+    prevBtn.disabled = atFirst;
+    nextBtn.disabled = atLast;
+    prevIcon.src = atFirst ? ICONS.prevDisabled : ICONS.prevEnabled;
+    nextIcon.src = atLast ? ICONS.nextDisabled : ICONS.nextEnabled;
+
+    /* Restore scroll only when we landed exactly where the URL asked (no shrink-shift)
+       and there's content to show — otherwise this is a fresh view, start at top. */
+    if (hasRestoreContext && !shifted && pageItems.length > 0) {
+      var saved = null;
+      try { saved = sessionStorage.getItem('scroll_' + activeTab + '_' + currentPage); } catch (e) {}
+      window.scrollTo(0, saved !== null ? (parseInt(saved, 10) || 0) : 0);
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  render();
+
+  /* Pin sticky-controls directly below the masthead, whatever its rendered height is. */
+  function updateStickyOffset() {
+    document.documentElement.style.setProperty('--masthead-h', masthead.offsetHeight + 'px');
+  }
+  updateStickyOffset();
+  window.addEventListener('resize', updateStickyOffset);
+
+  /* Search bar: hides on scroll down, reveals immediately on scroll up. Tabs stay sticky.
+     Direction is judged against the scroll position at the last committed state (not
+     frame-to-frame), so small jitter/momentum wobble mid-gesture can't flicker it. A brief
+     cooldown after each commit absorbs the tiny reverse "settle" bounce some scroll physics
+     produce right at the end of a gesture, so that alone can't immediately flip it back. */
+  var committedY = frame.scrollTop || window.scrollY;
+  var committedAt = 0;
+  var searchHidden = false;
+  var DIRECTION_THRESHOLD = 12;
+  var COMMIT_COOLDOWN_MS = 250;
+
+  function setSearchHidden(next) {
+    if (next === searchHidden) return;
+    searchHidden = next;
+    if (searchHidden) {
+      searchWrap.classList.add('hidden');
+    } else {
+      /* immediate re-reveal: skip the transition for this one frame */
+      searchWrap.style.transition = 'none';
+      searchWrap.classList.remove('hidden');
+      void searchWrap.offsetHeight;
+      searchWrap.style.transition = '';
+    }
+  }
+
+  function onScroll() {
+    var y = window.scrollY;
+    if (y <= masthead.offsetHeight) {
+      setSearchHidden(false);
+      committedY = y;
+      committedAt = Date.now();
+      return;
+    }
+    if (Date.now() - committedAt < COMMIT_COOLDOWN_MS) return;
+    var delta = y - committedY;
+    if (delta > DIRECTION_THRESHOLD) {
+      setSearchHidden(true);
+      committedY = y;
+      committedAt = Date.now();
+    } else if (delta < -DIRECTION_THRESHOLD) {
+      setSearchHidden(false);
+      committedY = y;
+      committedAt = Date.now();
+    }
+  }
+  var scrollTicking = false;
+  window.addEventListener('scroll', function () {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    window.requestAnimationFrame(function () {
+      onScroll();
+      scrollTicking = false;
+    });
+  }, { passive: true });
+
+  /* Tabs: switching resets to page 1 and updates the URL, but doesn't reload. */
+  function setActiveTab(tab) {
+    if (tab === activeTab) return;
+    activeTab = tab;
+    currentPage = 1;
+    hasRestoreContext = false;
+    window.history.replaceState(null, '', 'mailbox.html?tab=' + tab + '&page=1');
+    render();
+  }
+  tabAll.addEventListener('click', function () { setActiveTab('all'); });
+  tabUnread.addEventListener('click', function () { setActiveTab('unread'); });
+
+  /* Pagination: changing the page number is a full page refresh. */
+  prevBtn.addEventListener('click', function () {
+    if (prevBtn.disabled) return;
+    window.location.href = 'mailbox.html?tab=' + activeTab + '&page=' + (currentPage - 1);
+  });
+  nextBtn.addEventListener('click', function () {
+    if (nextBtn.disabled) return;
+    window.location.href = 'mailbox.html?tab=' + activeTab + '&page=' + (currentPage + 1);
+  });
+
+  /* Search: case-insensitive, debounced so it only searches after typing pauses. */
+  var debounceTimer = null;
+  searchInput.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    var value = searchInput.value;
+    debounceTimer = setTimeout(function () {
+      currentQuery = value.trim().toLowerCase();
+      render();
+    }, 300);
+  });
+})();
+</script>
+
+</body>
+</html>
