@@ -31,7 +31,9 @@
 
   .frame {
     width: 375px;
-    min-height: 812px;
+    height: 812px;
+    overflow-y: auto;
+    overflow-anchor: none;
     background: var(--bg-n8);
     display: flex;
     flex-direction: column;
@@ -88,6 +90,7 @@
   .qa-item .answer { font-size: 18px; line-height: 26px; color: var(--text-n1); }
 
   .text-list { display: flex; flex-direction: column; gap: 8px; }
+  .text-list.tight { margin-top: -32px; }
   .text-list .list-heading { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--text-n1); }
   .list-item { display: flex; align-items: flex-start; }
   .list-item.nested { padding-left: 45px; }
@@ -131,6 +134,36 @@
     background: var(--bg-n8); border: 1px solid var(--border-n5); border-radius: 4px; cursor: pointer;
   }
   .file-item .file-download-btn img { width: 16px; height: 16px; display: block; }
+
+  .milestone-item { display: flex; gap: 16px; align-items: flex-start; width: 100%; }
+  .milestone-timeline { display: flex; flex-direction: column; align-items: center; gap: 8px; align-self: stretch; padding: 4px 0; flex-shrink: 0; }
+  .milestone-dot { width: 24px; height: 24px; box-sizing: border-box; border: 4px solid #a4a4a4; border-radius: 100px; flex-shrink: 0; }
+  .milestone-line { width: 4px; flex: 1 0 0; background: #a4a4a4; border-radius: 2px; }
+  .milestone-content { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .milestone-title { font-weight: 600; font-size: 18px; line-height: 26px; color: var(--text-n3); }
+  .milestone-desc { font-size: 16px; line-height: 24px; letter-spacing: 0.14px; color: var(--text-n3); }
+
+  .sign-off {
+    width: 100%; box-sizing: border-box;
+    border: 1px solid var(--border-n5); border-radius: 8px; padding: 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .sign-off .sign-off-line1 {
+    font-weight: 400; font-size: 14px; line-height: 20px; letter-spacing: 0.12px;
+    color: var(--text-n3); text-align: center;
+  }
+  .sign-off .agency-logos-row { display: flex; align-items: flex-end; justify-content: center; gap: 16px; }
+  .sign-off .agency-logo { height: 85px; width: auto; max-width: 140px; display: block; object-fit: contain; }
+  .sign-off .agency-logo-badge {
+    width: 85px; height: 85px; border-radius: 50%; background: var(--primary);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 20px; letter-spacing: 0.5px;
+  }
+  .sign-off .sign-off-line2 {
+    font-weight: 600; font-size: 14px; line-height: 20px; letter-spacing: 0.12px;
+    color: var(--text-n1); text-align: center;
+  }
+  .sign-off .sign-off-line2 .contact-link { color: var(--primary); }
 </style>
 </head>
 <body>
@@ -164,7 +197,7 @@
 
 </div>
 
-<script src="mail-data.js?v=18"></script>
+<script src="mail-data.js?v=50"></script>
 <script>
 (function () {
   var params = new URLSearchParams(window.location.search);
@@ -326,10 +359,21 @@
       });
       content.appendChild(qaWrap);
     } else if (block.type === 'list') {
-      var wrap = el('div', 'text-list');
+      var wrap = el('div', 'text-list' + (block.tight ? ' tight' : ''));
       wrap.appendChild(el('div', 'list-heading', block.heading));
       block.items.forEach(function (item) { wrap.appendChild(renderListItem(item)); });
       content.appendChild(wrap);
+    } else if (block.type === 'milestone') {
+      var msItem = el('div', 'milestone-item');
+      var msTimeline = el('div', 'milestone-timeline');
+      msTimeline.appendChild(el('div', 'milestone-dot'));
+      msTimeline.appendChild(el('div', 'milestone-line'));
+      msItem.appendChild(msTimeline);
+      var msContent = el('div', 'milestone-content');
+      msContent.appendChild(el('div', 'milestone-title', block.title));
+      msContent.appendChild(el('div', 'milestone-desc', block.text));
+      msItem.appendChild(msContent);
+      content.appendChild(msItem);
     } else if (block.type === 'button') {
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -361,6 +405,46 @@
   } else {
     content.appendChild(el('p', null, 'This is a placeholder for the full mail content. In the live app, this would show the complete notice, any attachments, and related actions.'));
   }
+
+  /* Sign-off: appears on every mail, regardless of body content. */
+  var AGENCY_LOGOS = {
+    'ICA': [{ src: 'assets/mail-detail-agency-logo-ica.svg', height: 85 }],
+    'MOH': [{ src: 'assets/mail-detail-agency-logo-moh.svg', height: 85 }],
+    'MOE': [{ src: 'assets/mail-detail-agency-logo-moe.svg', height: 85 }],
+    'MSF': [
+      { src: 'assets/mail-detail-agency-logo-msf.png', height: 85 },
+      { src: 'assets/mail-detail-agency-logo-opg.svg', height: 60 }
+    ]
+  };
+  var signOff = el('div', 'sign-off');
+  signOff.appendChild(el('div', 'sign-off-line1', 'This is an auto-generated message by'));
+  var acronym = mail.agency ? mail.agency.split('–')[0].trim() : '';
+  if (acronym && AGENCY_LOGOS[acronym]) {
+    var logosRow = el('div', 'agency-logos-row');
+    AGENCY_LOGOS[acronym].forEach(function (item) {
+      var logo = document.createElement('img');
+      logo.src = item.src;
+      logo.alt = '';
+      logo.className = 'agency-logo';
+      logo.style.height = item.height + 'px';
+      logosRow.appendChild(logo);
+    });
+    signOff.appendChild(logosRow);
+  } else if (acronym) {
+    signOff.appendChild(el('div', 'agency-logo-badge', acronym));
+  } else {
+    var placeholder = document.createElement('img');
+    placeholder.src = 'assets/mail-detail-agency-placeholder.svg';
+    placeholder.alt = '';
+    placeholder.className = 'agency-logo';
+    signOff.appendChild(placeholder);
+  }
+  var signOffLine2 = el('div', 'sign-off-line2');
+  signOffLine2.appendChild(document.createTextNode('Need help? '));
+  var contactLink = el('span', 'contact-link', 'Contact us');
+  signOffLine2.appendChild(contactLink);
+  signOff.appendChild(signOffLine2);
+  content.appendChild(signOff);
 })();
 </script>
 

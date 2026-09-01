@@ -32,7 +32,9 @@
 
   .frame {
     width: 375px;
-    min-height: 812px;
+    height: 812px;
+    overflow-y: auto;
+    overflow-anchor: none;
     background: var(--bg-n8);
     display: flex;
     flex-direction: column;
@@ -199,7 +201,7 @@
 
 </div>
 
-<script src="mail-data.js?v=18"></script>
+<script src="mail-data.js?v=50"></script>
 <script>
 (function () {
   var frame = document.getElementById('frame');
@@ -265,7 +267,7 @@
     a.className = 'mail-item' + (isRead ? ' read' : '');
     a.href = 'mail-detail.html?id=' + mail.id + '&tab=' + tab + '&page=' + page;
     a.addEventListener('click', function () {
-      try { sessionStorage.setItem('scroll_' + tab + '_' + page, String(window.scrollY)); } catch (e) {}
+      try { sessionStorage.setItem('scroll_' + tab + '_' + page, String(frame.scrollTop)); } catch (e) {}
     });
 
     var indicator = document.createElement('div');
@@ -317,7 +319,7 @@
       var matches = tabItems.filter(function (m) { return m.title.toLowerCase().indexOf(currentQuery) !== -1; });
       renderItems(matches, readIds, 'No mail found.');
       pagination.classList.add('hidden');
-      window.scrollTo(0, 0);
+      frame.scrollTo(0, 0);
       return;
     }
 
@@ -354,9 +356,9 @@
     if (hasRestoreContext && !shifted && pageItems.length > 0) {
       var saved = null;
       try { saved = sessionStorage.getItem('scroll_' + activeTab + '_' + currentPage); } catch (e) {}
-      window.scrollTo(0, saved !== null ? (parseInt(saved, 10) || 0) : 0);
+      frame.scrollTo(0, saved !== null ? (parseInt(saved, 10) || 0) : 0);
     } else {
-      window.scrollTo(0, 0);
+      frame.scrollTo(0, 0);
     }
   }
 
@@ -374,7 +376,7 @@
      frame-to-frame), so small jitter/momentum wobble mid-gesture can't flicker it. A brief
      cooldown after each commit absorbs the tiny reverse "settle" bounce some scroll physics
      produce right at the end of a gesture, so that alone can't immediately flip it back. */
-  var committedY = frame.scrollTop || window.scrollY;
+  var committedY = frame.scrollTop;
   var committedAt = 0;
   var searchHidden = false;
   var DIRECTION_THRESHOLD = 12;
@@ -395,7 +397,7 @@
   }
 
   function onScroll() {
-    var y = window.scrollY;
+    var y = frame.scrollTop;
     if (y <= masthead.offsetHeight) {
       setSearchHidden(false);
       committedY = y;
@@ -415,7 +417,7 @@
     }
   }
   var scrollTicking = false;
-  window.addEventListener('scroll', function () {
+  frame.addEventListener('scroll', function () {
     if (scrollTicking) return;
     scrollTicking = true;
     window.requestAnimationFrame(function () {

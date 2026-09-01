@@ -44,23 +44,30 @@
   /* ── Mobile frame ── */
   .frame {
     width: 375px;
-    min-height: 812px;
+    height: 812px;
+    overflow-y: auto;
+    overflow-anchor: none;
+    overflow-x: hidden;
     background:
       linear-gradient(160.99deg, rgba(230, 242, 255, 0.8) 0%, rgba(253, 238, 233, 0.8) 34.232%),
       linear-gradient(90deg, #fff 0%, #fff 100%);
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 20px 40px rgba(0,0,0,0.15);
-    overflow: hidden;
   }
 
   /* ── iOS status bar ── */
   .status-bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     height: 42px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 4px 24px;
+    background: inherit;
   }
   .status-bar .time {
     font-weight: 600;
@@ -79,7 +86,17 @@
   .status-icons img.battery { height: 12px; width: 24px; }
 
   /* ── Header ── */
-  .header { padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; }
+  .header {
+    position: sticky;
+    top: 42px;
+    z-index: 2;
+    flex-shrink: 0;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: inherit;
+  }
   .header-row { display: flex; align-items: flex-end; gap: 8px; }
   .username { flex: 1; min-width: 0; }
   .username .welcome { font-size: 14px; line-height: 20px; color: var(--text-n1); }
@@ -193,7 +210,7 @@
   .benefits-card .view-breakdown { font-weight: 600; font-size: 14px; line-height: 20px; color: var(--primary-dark); text-decoration: none; }
 
   /* ── Bottom nav ── */
-  .bottom-nav { display: flex; width: 100%; background: #fff; }
+  .bottom-nav { position: sticky; bottom: 0; z-index: 1; display: flex; width: 100%; background: #fff; flex-shrink: 0; }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
     padding: 8px; border-top: 1px solid var(--border-n5); text-decoration: none;
@@ -342,7 +359,7 @@
 
 </div>
 
-<script src="mail-data.js?v=18"></script>
+<script src="mail-data.js?v=50"></script>
 <script>
 (function () {
   var readIds = mailGetReadIds();
